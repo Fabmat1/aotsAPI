@@ -1,3 +1,5 @@
 aotsapi.config
 .idea/
 __pycache__
+*.fits
+*.zip
