@@ -69,3 +69,30 @@ def bulk_download_spectra(file_list, projectid, output_path, *args, **kwargs):
         output_path.write(response.content)
 
     return response
+
+
+@fetch_csrf_token
+def bulk_upload_rvcurves(file_list, projectid, *args, **kwargs):
+    """
+    :param file_list: A list of filepaths of the files to upload
+    :param projectid: The project name or ID the files should be attributed to
+    :return: The servers HTTP response
+    """
+    s = kwargs["session"]
+    rvcurve_files = []
+    for i, file in enumerate(file_list):
+        try:
+            with open(file, "rb") as f:
+                rvcurve_files.append(("rvcurvefile", f.read()))
+        except FileNotFoundError:
+            print(f"The file {file} could not be opened, skipping...")
+
+    headers = {
+        "PUBLICAPIKEY": config_params["public-key"],
+        "SECRETAPIKEY": config_params["secret-key"],
+        "PROJECTID": str(projectid)
+    }
+
+    response = s.post(config_params["url"] + "/api/analysis/api-rvcurve-upload/", files=rvcurve_files,
+                      data={'csrfmiddlewaretoken': kwargs["csrf_token"]}, headers=headers)
+    return response
