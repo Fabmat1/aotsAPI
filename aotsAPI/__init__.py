@@ -1,3 +1,5 @@
+import os
+
 def gen_config_from_file(fname):
     config_dict = {}
     try:
@@ -14,4 +16,10 @@ def gen_config_from_file(fname):
 
 
 global config_params
-config_params = gen_config_from_file("aotsapi.config")
+
+path = os.path.dirname(__file__)
+
+config_params = gen_config_from_file(os.path.join(path, "aotsapi.config"))
+
+from .processing import *
+from .api_calls import *

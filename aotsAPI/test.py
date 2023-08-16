@@ -1,7 +1,5 @@
 import os
-
-import aotsAPI
-from api_calls import bulk_upload_spectra, bulk_upload_rvcurves
+from aotsAPI.api_calls import bulk_upload_spectra, bulk_upload_rvcurves
 
 # aotsAPI.config_params["url"] = http://somealternativeurl.com # parameters may be modified like this
 

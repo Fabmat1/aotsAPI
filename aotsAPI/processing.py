@@ -1,3 +1,4 @@
+import numpy as np
 from astropy.io import fits
 
 
@@ -23,9 +24,85 @@ shorten_meta_sed = {
     'logtheta_uerr': 'LOGT_UE',
 }
 
+keyconformtofitsdict = {
+    "source_id": "SID",
+    "ra": "RA",
+    "dec": "DEC",
+    "spec_class": "SPCLASS",
+    "logp": "LOGP",
+    "deltaRV": "DRV",
+    "deltaRV_err": "U_DRV",
+    "RVavg": "RVAVG",
+    "RVavg_err": "U_RVAVG",
+    "Nspec": "NSPEC",
+    "associated_files": "ASOC_F",
+    "timespan": "TSPAN"
+}
 
-def preprocess_rvcurve():
-    pass
+
+colnames_correspondence = {
+    "culum_fit_RV": "RV",
+    "u_culum_fit_RV": "RVERR",
+    "mjd": "MJD"
+}
+
+
+def preprocess_rvcurve(metadata, times, rvs, rv_uerr, rv_lerr, output_name):
+    """
+    This function pre-processes RV curve data and metadata, converts them into FITS format, and then writes them into a .fits file.
+
+    :param metadata: Metadata for the RV curve.
+    :type metadata: dict
+
+    :param times: The time array of the RV curve.
+    :type times: numpy.ndarray
+
+    :param rvs: The array containing RV data.
+    :type rvs: numpy.ndarray
+
+    :param rv_uerr: The array of upper errors for the RV data.
+    :type rv_uerr: numpy.ndarray
+
+    :param rv_lerr: The array of lower errors for the RV data.
+    :type rv_lerr: numpy.ndarray
+
+    :param output_name: The name of the output FITS file.
+    :type output_name: str
+    """
+
+    if len(times) == 0 or len(rvs) == 0 or len(rv_uerr) == 0 or len(rv_lerr):
+        return False
+
+    # Convert metadata to fits header
+    meta_hdr = fits.Header()
+    for key, value in metadata.items():
+        key = keyconformtofitsdict[key]
+        value = value.iloc[0]
+        if isinstance(value, float):
+            if not np.isnan(value):
+                meta_hdr[key] = value
+        else:
+            meta_hdr[key] = value
+
+    # Create fits hdu from data and metadata
+    # Create Primary HDU and set EXTEND keyword to True
+    primary_hdu = fits.PrimaryHDU(header=meta_hdr)
+    primary_hdu.header['EXTEND'] = True
+
+    data_hdu = fits.TableHDU.from_columns([
+        fits.Column(name='RV', format='E', array=rvs),
+        fits.Column(name='RV_LERR', format='E', array=rv_lerr),
+        fits.Column(name='RV_UERR', format='E', array=rv_uerr),
+        fits.Column(name='MJD', format='E', array=times),
+    ], name='RV_observed_data')
+
+    # Create HDU list
+    hdul = fits.HDUList([primary_hdu, data_hdu])
+
+    # Write HDU list to fits file
+    hdul.writeto(output_name, overwrite=True)
+
+    return True
 
 
 def preprocess_sed(metadata, model_wavelength, model_flux, model_magnitude, observed_wavelength, observed_flux,
